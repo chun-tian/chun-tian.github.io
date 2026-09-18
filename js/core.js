@@ -585,6 +585,10 @@ function _tryRecoverFromBackup() {
 }
 
 const saveData = async () => {
+    if (window._skipSave) {
+        console.log('[saveData] 已跳过（角色切换中）');
+        return;
+    }
     if (!SESSION_ID) {
         console.warn('[saveData] SESSION_ID 尚未初始化，跳过保存以防数据写入临时 key');
         return;
@@ -2498,7 +2502,14 @@ window.initializeSession = async function() {
     }
 
     await localforage.setItem(`${APP_PREFIX}lastSessionId`, SESSION_ID);
-
+   
+    // 让 hash 与当前 SESSION_ID 保持一致
+    try {
+        if (window.location.hash.substring(1) !== SESSION_ID) {
+            history.replaceState(null, '', '#' + SESSION_ID);
+        }
+    } catch (e) {}
+};
     // ============================================================
     // 【新增】让 URL 的 hash 与当前 SESSION_ID 保持一致
     // 这样用户手动刷新页面时，hash 不会残留上一个会话的 ID
